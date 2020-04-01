@@ -1,0 +1,259 @@
+<!-- ************************ -->
+<!-- ** Name: Chandan Naik ** -->
+<!-- ************************ -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!-- | Data Set: italy_earthquakes_from_2016                                                                                                          | -->
+<!-- | Input: italy_earthquakes_from_2016-08-24_to_2016-11-30.csv                                                                                     | -->
+<!-- | Output: Date V/S Magnitude                                                                                                                     | -->
+<!-- | Visualization Channels used:                                                                                                                   | -->
+<!-- |      1. Color gradient for increasing Magnitude                                                                                                | -->
+<!-- |      2. Size change for increasing Magnitude (Redundant I believe but for the sake of this assignment this can be considered.)                 | -->
+<!-- |      3. Interaction/Motion:  On mouseover the radius of the magnitude dot will increase and a tool tip appears with date and magnitude         | -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 15px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+svg {
+  display: block;
+  margin : 0 auto;
+}
+
+/* Source : https://codepen.io/githiro/pen/ICfFE */
+div.tooltip {
+  position: absolute;
+    min-width: 30px;
+    max-width: 300px;
+    padding: 5px 15px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.8);
+    color: #ddd;
+    font-size: 17px;
+    text-shadow: 0 1px 0 #000;
+    text-align: center;
+    line-height: 1.3;
+    letter-spacing: .06em;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    pointer-events: none;
+    &::after {
+        position: absolute;
+        left: 50%;
+        bottom: -6px;
+        content: "";
+        height: 0;
+        margin: 0 0 0 -6px;
+        border-right: 5px solid transparent;
+        border-left: 5px solid transparent;
+        border-top: 6px solid rgba(0,0,0,.7);
+        line-height: 0;
+    }
+}
+
+
+</style>
+<body>
+  <h1 style= "text-align : center"> Italy Earthquake Date VS Magnitude</h1>
+  <marquee>Hover over data points :)</marquee>
+</body>
+<!--Import the D3 Library (version 4 in this case)-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<!--Source: https://bl.ocks.org/sebg/6f7f1dd55e0c52ce5ee0dac2b2769f4b-->
+<script>
+
+// Set up the bounds of the visualization
+var margin = {top: 20, right: 100, bottom: 50, left: 70};
+var width = 1500 - margin.right - margin.left;
+var height = 1000 - margin.top - margin.bottom;
+
+// var parseTime = d3.timeParse("%Y-%m-%d");
+
+var parseDate = d3.timeParse("%Y-%m-%d"),
+    formatDate = d3.timeFormat("%b %d");
+
+var formatTime = d3.timeParse("%Y-%m-%d");
+
+// Set up the scales (the pieces that will convert from the data to the screen)
+var x = d3.scaleLinear()
+          .range([0, width]);
+
+var y = d3.scaleLinear()
+          .range([height, 0]);
+
+var color = d3.scaleSequential(d3.interpolateViridis);
+
+// Set up the scaffolds
+var xAxis = d3.axisBottom(x);
+var yAxis = d3.axisLeft(y).tickFormat(d3.timeFormat("%Y-%m-%d"));
+
+// Creating a tooltip in d3
+var toolTip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+// Set up an SVG that gives us a canvas to draw on
+var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+              .attr("transform", "translate("+margin.left + "," + margin.top + ")");
+
+// Import the data. Most of the drawing code goes in here.
+d3.csv("italy_earthquakes_from_2016-08-24_to_2016-11-30.csv", function(error, data) {
+  if (error) throw error;
+
+  // Loop through the data and convert the numeric columns to numbers
+  data.forEach(function(d){
+    d.Magnitude = +d.Magnitude;
+
+    // d.Time = parseDate(d.Time.split(" ")[0]);
+
+    d.Time = formatTime(d.Time.split(" ")[0]);
+    // console.log(d.Time);
+    })
+
+  // Create some variables that let us hold the different columns we'll want to index into
+  var x_val = "Magnitude";
+  var y_val = "Time";
+  var color_val = "Magnitude";
+
+  // Specify the bounds on the scales now that we have some data
+  x.domain(d3.extent(data, function(d){ return d[x_val];})).nice();
+  y.domain(d3.extent(data, function(d){ return d[y_val];}));
+  color.domain(d3.extent(data, function(d) { return d[color_val];})).nice();
+
+  // Specify the parameters on the x-axis and draw it
+  svg.append("g")
+     .attr("class", "x axis")
+     .attr("transform", "translate(0," + height + ")")
+     .call(xAxis)
+     .append("text")
+        .attr("class", "label")
+        .attr("x", width)
+        .attr("y",-6)
+        .style("text-anchor", "end")
+        .text(x_val);
+
+  // Specify the parameters on the y-axis and draw it
+  svg.append("g")
+     .attr("class", "y axis")
+     .call(yAxis)
+     .append("text")
+        .attr("class", "label")
+        .attr("transform", "rotate(-90)")
+        .attr("y",6)
+        .style("text-anchor", "end")
+        .text(y_val);
+
+  // text label for the x axis
+    svg.append("text")
+        .attr("transform",
+              "translate(" + (width/2) + " ," +
+                             (height + margin.top + 20) + ")")
+        .style("text-anchor", "middle")
+        .text("Magnitude").attr("font-size", 20 + "px;");
+
+    // text label for the y axis
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Date").attr("font-size: 17px;");
+
+  // Specify the parameters of a mark
+  svg.selectAll(".dot")
+     .data(data)
+     .enter().append("circle")
+        .attr("class","dot")
+        .attr("r", function(d)
+        {
+          // Based on the magnitude the size of the circle is displyed.
+          if(d.Magnitude > 6.0)
+          {
+            return 10.0;
+          }
+          else if(d.Magnitude >= 4.5 && d.Magnitude <= 6.0 )
+          {
+            return 6.5;
+          }
+          else
+          {
+            return 3.5;
+          }
+        })
+        .attr("cx", function(d){
+          return x(d[x_val]);
+        })
+        .attr("cy", function(d){
+          return y(d[y_val]);
+        })
+        .style("fill", function(d) {
+          return color(d[color_val]);
+        })
+        .on("mouseover", function(d) {
+          // This part is responsible for magnifying the size of the circle on mouseover
+          d3.select(this)
+            .transition()
+            .duration(500)
+            .attr("r", d.Magnitude * 5);
+
+          // This part is responsible for creating a tooltip on mouseover.
+          toolTip.transition()
+             .duration(300)
+             .style("opacity", 0.7);
+
+          // Adding information in the tooltip.
+          var dateFormat = d3.timeFormat("%Y-%m-%d")
+          toolTip.html("Magnitude : " + d.Magnitude + "</br>" + "Date : " + dateFormat(d.Time))
+             .style("left", (d3.event.pageX) + "px")
+             .style("top", (d3.event.pageY) + "px");
+        })
+        .on("mouseout", function(d){
+          //On mouseout, the size of the circle will be retained to it's original size
+          d3.select(this)
+          .transition()
+          .duration(550)
+            .attr("r", function(d)
+            {
+              if(d.Magnitude > 6.0)
+              {
+                return 10.0;
+              }
+              else if(d.Magnitude >= 4.5 && d.Magnitude <= 6.0 )
+              {
+                return 6.5;
+              }
+              else
+              {
+                return 3.5;
+              }
+            }
+
+          );
+
+          // Tooltip is will disappear
+          toolTip.transition()
+             .duration(500)
+             .style("opacity", 0);
+
+        })
+
+});
+
+</script>
